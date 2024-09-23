@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片浏览</title>
+    <style>
+        body, html {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .split {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .top, .bottom {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .image {
+            width: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="split">
+        <div class="top" id="top">
+            <img src="a.jpg" alt="Image A" class="image">
+        </div>
+
+        <div class="bottom" id="bottom">
+            <img src="b.jpg" alt="Image B" class="image">
+        </div>
+    </div>
+
+    <script>
+        // 恢复滚动位置
+        window.onload = function() {
+            document.getElementById('top').scrollTop = localStorage.getItem('topScroll') || 0;
+            document.getElementById('bottom').scrollTop = localStorage.getItem('bottomScroll') || 0;
+        };
+
+        // 保存滚动位置
+        document.getElementById('top').onscroll = function() {
+            localStorage.setItem('topScroll', this.scrollTop);
+        };
+
+        document.getElementById('bottom').onscroll = function() {
+            localStorage.setItem('bottomScroll', this.scrollTop);
+        };
+    </script>
+</body>
+</html>
