@@ -1,240 +1,510 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>图片滚动缩放页面</title>
+    <title>滚动与缩放的图片浏览 (IndexedDB Version)</title>
     <style>
-        body {
+        body, html {
             margin: 0;
             padding: 0;
+            height: 100%;
             overflow: hidden;
-            background-color: black;
-            color: white;
-            font-family: sans-serif;
+            width: 100vw;
         }
 
-        .container {
+        .split {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100%;
         }
 
-        .scroll-container {
+        .top, .bottom {
             flex: 1;
-            overflow-y: scroll;
+            overflow-y: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            position: relative;
+            width: 100%;
+        }
+
+        /* Style for the top text content */
+        .content {
+            padding: 10px; /* Add some padding for readability */
+            font-size: 1em;
+            line-height: 1.6; /* Slightly more line spacing */
+            white-space: pre-wrap;
+            word-wrap: break-word; /* Ensure long words break */
+            color: #333; /* Darker text color */
+            background-color: #f9f9f9; /* Light background for top */
+            box-sizing: border-box; /* Include padding in width/height */
+            min-height: 100%; /* Ensure background covers scroll area */
         }
 
         .image-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            padding: 0;
+            margin: 0;
+            background-color: #fff; /* White background for image area */
         }
 
         .image {
-            width: 100vw;
-            height: auto;
+            display: block;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.1s ease-out;
+            margin: 0;
+            max-width: none !important; /* Override potential external styles */
         }
 
         .slider-container {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .slider-container.hidden {
-            display: none;
+            width: 90%;
+            max-width: 500px;
+            padding: 15px;
+            left: 50%; /* Center the slider container */
+            transform: translateX(-50%); /* Center the slider container */
+            box-sizing: border-box;
         }
 
         .slider {
-            width: 200px;
+            width: 100%;
         }
 
-        .scroll-indicator {
-            position: fixed;
+        .slider-bottom {
             bottom: 10px;
+        }
+
+        /* Scroll indicators */
+         .scroll-indicator {
+            position: fixed;
             left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 14px;
+            z-index: 1000;
+            pointer-events: none; /* Prevent indicators from blocking interactions */
+        }
+
+        .scroll-top {
+            top: 10px;
+        }
+
+        .scroll-bottom {
+            bottom: 55px; /* Adjusted position to avoid overlap with slider */
+        }
+
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="top" class="scroll-container"></div>
+    <div class="split">
+        <div class="top" id="top">
+            <div class="content">
+                <p>绯弹的亚莉亚(绯弹的亚里亚)
 
-        <div id="bottom" class="scroll-container">
-            <div id="image-container-bottom" class="image-container"></div>
+
+作者：赤松中学
+
+
+
+
+
+第一卷 序
+
+
+台版 转自 阳子ようこ@轻之国度
+
+第三十四卷 早天的响导舰 插图
+
+
+(这里是示例文本内容，您可以替换成实际的小说文本)
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Maecenas fermentum consequat mi. Donec fermentum. Pellentesque malesuada nulla a mi. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Cras mollis scelerisque nunc. Nullam arcu. Aliquam consequat. Curabitur augue lorem, dapibus quis, laoreet et, pretium ac, nisi. Aenean magna nisl, mollis quis, molestie eu, feugiat in, orci. In hac habitasse platea dictumst.
+
+Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris, sed placerat ipsum urna sed risus. In convallis tellus a mauris. Curabitur non elit ut libero tristique sodales. Mauris a lacus. Donec mattis semper leo. In hac habitasse platea dictumst. Vivamus facilisis diam at odio. Mauris dictum, nisi eget consequat elementum, lacus ligula molestie metus, non feugiat orci magna ac sem. Quisque turpis. Donec quis lectus. Suspendisse potenti. Fusce eu ante sit amet lacus cursus consectetuer. Aenean
+</p>
+            </div>
+        </div>
+
+        <div class="bottom" id="bottom">
+            <div class="image-container" id="image-container-bottom">
+                </div>
         </div>
     </div>
 
-    <div class="slider-container" id="slider-container-bottom">
-        <input id="slider-bottom" class="slider" type="range" min="10" max="300" value="125">
+    <div class="slider-container slider-bottom">
+        <input type="range" min="100" max="200" value="125" class="slider" id="slider-bottom">
     </div>
 
-    <div class="scroll-indicator" id="scroll-bottom-indicator">滚动比例: 0.0000</div>
+    <div class="scroll-indicator scroll-top" id="scroll-top-indicator">Top 滚动: 0.00</div>
+    <div class="scroll-indicator scroll-bottom" id="scroll-bottom-indicator">Bottom 滚动: 0.00</div>
 
     <script>
-        const DB_NAME = 'viewerSettings';
-        const STORE_NAME = 'settings';
-
-        function openDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-                request.onupgradeneeded = function(event) {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME);
-                    }
-                };
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function saveSetting(key, value) {
-            const db = await openDB();
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).put(value, key);
-            await tx.done?.catch?.(() => {});
-        }
-
-        async function getSetting(key) {
-            const db = await openDB();
-            return new Promise((resolve) => {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const request = store.get(key);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => resolve(null);
-            });
-        }
-
         let lockedScrollRatioBottom = null;
+        const DB_NAME = 'SDB'; // Database name (adjust if needed)
+        const DB_VERSION = 8;    // Database version (adjust if needed)
+        const OBJECT_STORE_NAME = 'store'; // Object store name (adjust if needed)
 
-        function updateImageTransform(container, slider) {
+        // Function to load images from IndexedDB
+        function createImagesFromIndexedDB(container, fileNames) {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                   console.error("Your browser doesn't support IndexedDB.");
+                   return reject(new Error("IndexedDB not supported"));
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                let loadedCount = 0;
+                const total = fileNames.length;
+
+                request.onerror = function(event) {
+                    console.error(`IndexedDB error: ${event.target.errorCode}`);
+                    reject(new Error(`IndexedDB error: ${event.target.errorCode}`));
+                };
+
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    // Check if the object store exists
+                    if (!db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                        console.error(`Object store "${OBJECT_STORE_NAME}" not found in database "${DB_NAME}".`);
+                         db.close(); // Close the connection
+                        // Attempt to display a user-friendly message or handle appropriately
+                        container.innerHTML = `<p style="color: red; padding: 20px;">错误：无法加载图片，所需数据存储不存在。请确保已正确导入图片数据。</p>`;
+                        return reject(new Error(`Object store "${OBJECT_STORE_NAME}" not found.`));
+                    }
+
+                    const transaction = db.transaction([OBJECT_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(OBJECT_STORE_NAME);
+
+                    if (total === 0) {
+                        resolve(); // Resolve immediately if no files requested
+                        return;
+                    }
+
+                    fileNames.forEach(fileName => {
+                        const getReq = store.get(fileName);
+
+                        getReq.onsuccess = function(e) {
+                            const blob = e.target.result;
+                            if (blob instanceof Blob) {
+                                const img = new Image(); // Use Image constructor
+                                img.onload = () => {
+                                    URL.revokeObjectURL(img.src); // Revoke URL after load to free memory
+                                    if (++loadedCount === total) resolve();
+                                };
+                                img.onerror = () => {
+                                     console.error(`Failed to load image resource for ${fileName}`);
+                                     // Optionally display a placeholder or skip
+                                     if (++loadedCount === total) resolve(); // Still resolve after error to not block init
+                                }
+                                img.src = URL.createObjectURL(blob);
+                                img.alt = fileName; // Use filename as alt text
+                                img.className = 'image';
+                                container.appendChild(img);
+                            } else {
+                                console.warn(`文件未在IndexedDB中找到或不是Blob: ${fileName}`);
+                                // Optionally add a placeholder or error message to the DOM
+                                const errorMsg = document.createElement('p');
+                                errorMsg.textContent = `无法加载: ${fileName}`;
+                                errorMsg.style.color = 'orange';
+                                errorMsg.style.textAlign = 'center';
+                                container.appendChild(errorMsg);
+                                if (++loadedCount === total) resolve(); // Still resolve
+                            }
+                        };
+                        getReq.onerror = function (e) {
+                            console.error(`从IndexedDB读取失败: ${fileName}`, e);
+                            if (++loadedCount === total) resolve(); // Still resolve
+                        };
+                    });
+
+                     transaction.oncomplete = function() {
+                        // console.log("Read transaction complete.");
+                        db.close(); // Close DB connection when transaction is done
+                    };
+                    transaction.onerror = function(event) {
+                         console.error("Read transaction failed: ", event.target.error);
+                         reject(new Error("Read transaction failed")); // Reject promise on transaction error
+                    };
+                };
+
+                 // Handle database upgrade or creation if needed (though reading doesn't usually require this)
+                 request.onupgradeneeded = function(event) {
+                     console.log("IndexedDB upgrade needed - this might indicate the DB or store didn't exist as expected for reading.");
+                     // Normally you define stores here, but for read-only, we mainly rely on it existing.
+                     // If the store MUST exist, the onsuccess check is more relevant.
+                 };
+            });
+        }
+
+        // --- Initialization Function ---
+        async function init() {
+            // Define the filenames for the bottom container images
+            // Example: File 1.jpeg, File 2.jpeg, ... File 205.jpeg
+            const bottomFileNames = Array.from({ length: 205 }, (_, i) => `File ${i + 1}.jpeg`);
+            const bottomContainer = document.getElementById('image-container-bottom');
+            const bottomSlider = document.getElementById('slider-bottom');
+            const topPane = document.getElementById('top');
+            const bottomPane = document.getElementById('bottom');
+
+             // Clear any previous content (like error messages)
+            bottomContainer.innerHTML = '';
+
+            try {
+                 // Load images for the bottom container from IndexedDB
+                await createImagesFromIndexedDB(bottomContainer, bottomFileNames);
+                console.log("Images loaded from IndexedDB.");
+
+                 // --- Restore state AFTER images are loaded ---
+                // Restore scroll positions
+                topPane.scrollTop = parseFloat(localStorage.getItem('topScroll') || '0');
+                bottomPane.scrollTop = parseFloat(localStorage.getItem('bottomScroll') || '0');
+
+                // Restore slider value for the bottom pane
+                bottomSlider.value = localStorage.getItem('sliderBottomValue') || 125; // Default zoom 125%
+
+                 // Apply initial image transform based on restored slider value
+                updateImageTransform(); // Call simplified version
+
+                 // Update scroll indicators based on restored positions
+                updateScrollIndicators();
+
+                // Restore slider visibility state
+                const slidersHidden = localStorage.getItem('slidersHidden') === 'true';
+                if (slidersHidden) {
+                    document.querySelectorAll('.slider-container').forEach(slider => {
+                        slider.classList.add('hidden');
+                    });
+                }
+
+            } catch (error) {
+                 console.error("Initialization failed:", error);
+                 // Display a user-friendly error message in the image container if loading fails
+                 if (bottomContainer.innerHTML === '') { // Avoid overwriting specific error messages from createImagesFromIndexedDB
+                    bottomContainer.innerHTML = `<p style="color: red; padding: 20px;">初始化图片时出错: ${error.message}. 请检查浏览器控制台获取详细信息。</p>`;
+                 }
+            }
+        }
+
+        // --- Call init on window load ---
+        window.onload = init;
+
+        // --- Update Image Transform (Simplified for Bottom Only) ---
+        function updateImageTransform() {
+            const container = document.getElementById('image-container-bottom');
+            const slider = document.getElementById('slider-bottom');
+            const scrollContainer = document.getElementById('bottom'); // Always bottom pane
             const width = window.innerWidth;
             const images = container.querySelectorAll('.image');
-            const scrollContainer = document.getElementById('bottom');
-            const scrollRatio = lockedScrollRatioBottom;
+
+            let scrollRatio = lockedScrollRatioBottom; // Only use bottom locked ratio
+            if (scrollRatio !== null) {
+                scrollRatio = parseFloat(scrollRatio).toFixed(4);
+                 // console.log(`Applying locked bottom scroll ratio: ${scrollRatio}`);
+            }
 
             const imageWidth = (slider.value / 100) * width;
             images.forEach(image => {
                 image.style.width = `${imageWidth}px`;
             });
 
+            // Restore scroll position based on locked ratio *after* resizing images
             if (scrollRatio !== null) {
+                // Use requestAnimationFrame to ensure layout is updated after width change
                 requestAnimationFrame(() => {
-                    scrollContainer.scrollTop = scrollRatio * (scrollContainer.scrollHeight - scrollContainer.clientHeight);
-                });
+                     // Check scrollHeight and clientHeight are valid before calculating
+                    const scrollHeight = scrollContainer.scrollHeight;
+                    const clientHeight = scrollContainer.clientHeight;
+                     if (scrollHeight > clientHeight) { // Avoid division by zero or negative numbers
+                       const newScrollTop = scrollRatio * (scrollHeight - clientHeight);
+                       scrollContainer.scrollTop = newScrollTop;
+                       // console.log(`Set bottom scrollTop to: ${newScrollTop}`);
+                    } else {
+                        scrollContainer.scrollTop = 0; // Cannot scroll, set to top
+                    }
+                     // Update indicator immediately after restoring scroll
+                     updateScrollIndicators();
+                 });
             }
         }
 
+        // --- Update Scroll Indicators ---
         function updateScrollIndicators() {
+            const top = document.getElementById('top');
             const bottom = document.getElementById('bottom');
-            const bottomRatio = (bottom.scrollTop / (bottom.scrollHeight - bottom.clientHeight)).toFixed(4);
-            document.getElementById('scroll-bottom-indicator').textContent = `滚动比例: ${bottomRatio}`;
+
+            // Calculate Top Ratio (handle division by zero)
+            const topScrollable = top.scrollHeight - top.clientHeight;
+            const topRatio = topScrollable > 0 ? (top.scrollTop / topScrollable).toFixed(2) : "0.00";
+
+            // Calculate Bottom Ratio (handle division by zero)
+            const bottomScrollable = bottom.scrollHeight - bottom.clientHeight;
+             // Use Math.max to prevent negative ratio if scrollTop exceeds scrollable height temporarily
+            const bottomRatio = bottomScrollable > 0 ? (Math.max(0, bottom.scrollTop) / bottomScrollable).toFixed(2) : "0.00";
+
+            // Update indicators
+            document.getElementById('scroll-top-indicator').textContent = `Top 滚动: ${topRatio}`;
+            document.getElementById('scroll-bottom-indicator').textContent = `Bottom 滚动: ${bottomRatio}`;
         }
 
+        // --- Lock Scroll Ratio (Simplified for Bottom Only) ---
         function lockScrollRatio() {
             const scrollContainer = document.getElementById('bottom');
-            const ratio = (scrollContainer.scrollTop / (scrollContainer.scrollHeight - scrollContainer.clientHeight)).toFixed(4);
+            const scrollableHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+            // Prevent division by zero or NaN if not scrollable
+            const ratio = scrollableHeight > 0 ? (scrollContainer.scrollTop / scrollableHeight).toFixed(4) : "0.0000";
             lockedScrollRatioBottom = ratio;
+            // console.log(`Locked bottom scroll ratio: ${lockedScrollRatioBottom}`);
         }
 
+        // --- Unlock Scroll Ratio (Simplified for Bottom Only) ---
         function unlockScrollRatio() {
+            // console.log(`Unlocked bottom scroll ratio (was ${lockedScrollRatioBottom})`);
             lockedScrollRatioBottom = null;
         }
 
-        function createImages(container, prefix, count) {
-            for (let i = 1; i <= count; i++) {
-                const img = document.createElement('img');
-                const fileName = `${prefix}${String(i)}.jpeg`;
-                img.src = fileName;
-                img.alt = `Image ${i}`;
-                img.className = 'image';
-                container.appendChild(img);
-            }
-        }
+        // --- Event Listeners ---
 
-        window.onload = async function() {
-            createImages(document.getElementById('image-container-bottom'), 'File ', 205);
-
-            const topScroll = parseInt(await getSetting('topScroll') || '0');
-            const bottomScroll = parseInt(await getSetting('bottomScroll') || '0');
-            const sliderBottomValue = parseInt(await getSetting('sliderBottomValue') || '125');
-            const slidersHidden = await getSetting('slidersHidden') === true;
-
-            document.getElementById('top').scrollTop = topScroll;
-            document.getElementById('bottom').scrollTop = bottomScroll;
-            document.getElementById('slider-bottom').value = sliderBottomValue;
-
-            updateImageTransform(document.getElementById('image-container-bottom'), document.getElementById('slider-bottom'));
-            updateScrollIndicators();
-
-            if (slidersHidden) {
-                document.querySelectorAll('.slider-container').forEach(slider => {
-                    slider.classList.add('hidden');
-                });
+        // Save scroll positions & update indicators
+        document.getElementById('top').onscroll = function() {
+            // Use requestAnimationFrame to avoid performance issues on rapid scrolling
+            requestAnimationFrame(() => {
+                localStorage.setItem('topScroll', this.scrollTop);
+                updateScrollIndicators();
+            });
+        };
+        document.getElementById('bottom').onscroll = function() {
+            // Only save if scroll is not locked (i.e., not during slider drag)
+            if (lockedScrollRatioBottom === null) {
+                 requestAnimationFrame(() => {
+                    localStorage.setItem('bottomScroll', this.scrollTop);
+                    updateScrollIndicators();
+                 });
+            } else {
+                // Update indicator even when locked if needed, but don't save position
+                 requestAnimationFrame(updateScrollIndicators);
             }
         };
 
-        document.getElementById('top').onscroll = () => saveSetting('topScroll', document.getElementById('top').scrollTop);
-        document.getElementById('bottom').onscroll = () => {
-            saveSetting('bottomScroll', document.getElementById('bottom').scrollTop);
-            updateScrollIndicators();
-        };
+        // Bottom slider interactions
+        document.getElementById('slider-bottom').addEventListener('touchstart', function(event) {
+             // Prevent page scroll while dragging slider
+             event.preventDefault();
+            lockScrollRatio(); // Lock bottom scroll ratio
+        }, { passive: false }); // Need passive: false to preventDefault
 
-        document.getElementById('slider-bottom').addEventListener('touchstart', () => lockScrollRatio());
         document.getElementById('slider-bottom').addEventListener('input', function() {
-            saveSetting('sliderBottomValue', this.value);
-            updateImageTransform(document.getElementById('image-container-bottom'), this);
+            localStorage.setItem('sliderBottomValue', this.value);
+            updateImageTransform(); // Update images based on slider value
         });
-        document.getElementById('slider-bottom').addEventListener('touchend', () => unlockScrollRatio());
 
+        document.getElementById('slider-bottom').addEventListener('touchend', function() {
+            unlockScrollRatio(); // Unlock bottom scroll ratio
+        });
+
+        // --- Touch Gesture for Slider Visibility ---
         let touchStartTime = null;
         let touchCount = 0;
         let touchTimer = null;
+        const TOUCH_DURATION_MS = 2000; // 2 seconds for gesture
 
         function handleTouchStart(event) {
+            // Update touch count regardless of target
             touchCount = event.touches.length;
-            if (touchCount === 5 && !touchStartTime) {
+
+            // Start timer only if 5 touches detected and no timer is running
+            if (touchCount === 5 && !touchTimer && !touchStartTime) {
                 touchStartTime = Date.now();
+                // console.log("5 touches detected, starting timer...");
                 touchTimer = setTimeout(() => {
+                    // console.log("2 seconds elapsed with 5 touches, toggling sliders.");
                     toggleSliders();
-                }, 5000);
+                    touchStartTime = null; // Reset start time after action
+                    touchTimer = null; // Clear timer variable
+                }, TOUCH_DURATION_MS);
+            } else if (touchCount !== 5 && touchTimer) {
+                 // If finger count changes from 5, clear timer
+                 // console.log("Touch count changed from 5 or timer existed, clearing timer.");
+                 clearTimeout(touchTimer);
+                 touchTimer = null;
+                 touchStartTime = null;
             }
         }
 
-        function handleTouchEnd() {
-            if (touchCount === 5 && touchStartTime) {
+        function handleTouchEnd(event) {
+            // Use event.touches.length which reflects remaining touches
+             const remainingTouches = event.touches.length;
+
+            // If the timer is running and touches drop below 5, clear the timer
+            if (touchTimer && remainingTouches < 5) {
+                // console.log("Touch count dropped below 5 during hold, clearing timer.");
                 clearTimeout(touchTimer);
+                touchTimer = null;
                 touchStartTime = null;
             }
+             // Update touchCount for the next start event logic
+             touchCount = remainingTouches;
+             // If all fingers are lifted, ensure state is reset
+             if (remainingTouches === 0) {
+                  touchStartTime = null; // Reset fully on release
+             }
         }
+
+         function handleTouchMove(event) {
+             // Check if the number of touches changes during move
+             if (touchTimer && event.touches.length !== 5) {
+                // console.log("Touch count changed during move, clearing timer.");
+                 clearTimeout(touchTimer);
+                 touchTimer = null;
+                 touchStartTime = null;
+             }
+             // Keep touchCount updated
+             touchCount = event.touches.length;
+         }
+
 
         function toggleSliders() {
             const sliders = document.querySelectorAll('.slider-container');
-            sliders.forEach(slider => slider.classList.toggle('hidden'));
-            const hidden = document.querySelector('.slider-container').classList.contains('hidden');
-            saveSetting('slidersHidden', hidden);
+            let isHidden = false;
+            sliders.forEach(slider => {
+                slider.classList.toggle('hidden');
+                // Check the state after toggling (assumes all sliders have same state)
+                isHidden = slider.classList.contains('hidden');
+            });
+
+            // Store the hidden state
+            localStorage.setItem('slidersHidden', isHidden);
+            // console.log(`Sliders toggled. Hidden: ${isHidden}`);
         }
 
-        document.body.addEventListener('touchstart', handleTouchStart);
-        document.body.addEventListener('touchend', handleTouchEnd);
-        document.body.addEventListener('touchmove', handleTouchStart);
+        // Add body listeners for touch gestures
+        document.body.addEventListener('touchstart', handleTouchStart, { passive: true }); // Start can be passive
+        document.body.addEventListener('touchend', handleTouchEnd, { passive: true });     // End can be passive
+        document.body.addEventListener('touchmove', handleTouchMove, { passive: true });   // Move can be passive
 
-        ['click', 'mousedown'].forEach(eventName => {
-            document.getElementById('slider-bottom').addEventListener(eventName, e => e.preventDefault());
+        // Prevent default click/mousedown on slider track (forces drag)
+        document.getElementById('slider-bottom').addEventListener('click', e => e.preventDefault());
+        document.getElementById('slider-bottom').addEventListener('mousedown', e => {
+            // For mouse, lock ratio on mousedown and unlock on mouseup on the *document*
+            // This handles cases where the mouse leaves the slider while dragging
+            lockScrollRatio();
+            document.addEventListener('mouseup', handleMouseUpSlider, { once: true });
+             // Prevent default only if the click is on the track, not the thumb?
+             // It's simpler to prevent default always and rely on input/change for value.
+             e.preventDefault();
         });
+
+        function handleMouseUpSlider() {
+             unlockScrollRatio();
+             // console.log("Mouse up detected after slider mousedown, unlocked ratio.");
+         }
+
     </script>
 </body>
 </html>
