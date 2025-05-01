@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>滚动与缩放的图片浏览 (IndexedDB Version)</title>
+    <title>滚动与缩放的图片浏览 (IndexedDB Version - Fixed)</title>
     <style>
         body, html {
             margin: 0;
@@ -488,18 +488,18 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
         document.body.addEventListener('touchend', handleTouchEnd, { passive: true });     // End can be passive
         document.body.addEventListener('touchmove', handleTouchMove, { passive: true });   // Move can be passive
 
-        // Prevent default click/mousedown on slider track (forces drag)
+        // Prevent default click on slider track (forces drag for value change)
         document.getElementById('slider-bottom').addEventListener('click', e => e.preventDefault());
+
+        // Handle mousedown for mouse dragging
         document.getElementById('slider-bottom').addEventListener('mousedown', e => {
-            // For mouse, lock ratio on mousedown and unlock on mouseup on the *document*
-            // This handles cases where the mouse leaves the slider while dragging
+            // Lock ratio on mousedown and unlock on mouseup on the *document*
             lockScrollRatio();
             document.addEventListener('mouseup', handleMouseUpSlider, { once: true });
-             // Prevent default only if the click is on the track, not the thumb?
-             // It's simpler to prevent default always and rely on input/change for value.
-             e.preventDefault();
+            // *** REMOVED e.preventDefault() HERE TO ALLOW MOUSE DRAG ***
         });
 
+        // Function to handle mouseup anywhere after slider mousedown
         function handleMouseUpSlider() {
              unlockScrollRatio();
              // console.log("Mouse up detected after slider mousedown, unlocked ratio.");
