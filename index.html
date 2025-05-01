@@ -1,59 +1,240 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图片的浏览</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>图片滚动缩放页面</title>
     <style>
-        body, html {
+        body {
             margin: 0;
-            height: 100%;
+            padding: 0;
             overflow: hidden;
+            background-color: black;
+            color: white;
+            font-family: sans-serif;
         }
 
-        .split {
+        .container {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: 100vh;
         }
 
-        .top, .bottom {
+        .scroll-container {
             flex: 1;
-            overflow-y: auto;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .image {
-            width: 100%;
-            display: block;
+            width: 100vw;
+            height: auto;
+        }
+
+        .slider-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .slider-container.hidden {
+            display: none;
+        }
+
+        .slider {
+            width: 200px;
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="split">
-        <div class="top" id="top">
-            <img src="a.jpg" alt="Image A" class="image">
-        </div>
+    <div class="container">
+        <div id="top" class="scroll-container"></div>
 
-        <div class="bottom" id="bottom">
-            <img src="b.jpg" alt="Image B" class="image">
+        <div id="bottom" class="scroll-container">
+            <div id="image-container-bottom" class="image-container"></div>
         </div>
     </div>
 
+    <div class="slider-container" id="slider-container-bottom">
+        <input id="slider-bottom" class="slider" type="range" min="10" max="300" value="125">
+    </div>
+
+    <div class="scroll-indicator" id="scroll-bottom-indicator">滚动比例: 0.0000</div>
+
     <script>
-        // 恢复滚动位置
-        window.onload = function() {
-            document.getElementById('top').scrollTop = localStorage.getItem('topScroll') || 0;
-            document.getElementById('bottom').scrollTop = localStorage.getItem('bottomScroll') || 0;
+        const DB_NAME = 'viewerSettings';
+        const STORE_NAME = 'settings';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function saveSetting(key, value) {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(value, key);
+            await tx.done?.catch?.(() => {});
+        }
+
+        async function getSetting(key) {
+            const db = await openDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+            });
+        }
+
+        let lockedScrollRatioBottom = null;
+
+        function updateImageTransform(container, slider) {
+            const width = window.innerWidth;
+            const images = container.querySelectorAll('.image');
+            const scrollContainer = document.getElementById('bottom');
+            const scrollRatio = lockedScrollRatioBottom;
+
+            const imageWidth = (slider.value / 100) * width;
+            images.forEach(image => {
+                image.style.width = `${imageWidth}px`;
+            });
+
+            if (scrollRatio !== null) {
+                requestAnimationFrame(() => {
+                    scrollContainer.scrollTop = scrollRatio * (scrollContainer.scrollHeight - scrollContainer.clientHeight);
+                });
+            }
+        }
+
+        function updateScrollIndicators() {
+            const bottom = document.getElementById('bottom');
+            const bottomRatio = (bottom.scrollTop / (bottom.scrollHeight - bottom.clientHeight)).toFixed(4);
+            document.getElementById('scroll-bottom-indicator').textContent = `滚动比例: ${bottomRatio}`;
+        }
+
+        function lockScrollRatio() {
+            const scrollContainer = document.getElementById('bottom');
+            const ratio = (scrollContainer.scrollTop / (scrollContainer.scrollHeight - scrollContainer.clientHeight)).toFixed(4);
+            lockedScrollRatioBottom = ratio;
+        }
+
+        function unlockScrollRatio() {
+            lockedScrollRatioBottom = null;
+        }
+
+        function createImages(container, prefix, count) {
+            for (let i = 1; i <= count; i++) {
+                const img = document.createElement('img');
+                const fileName = `${prefix}${String(i)}.jpeg`;
+                img.src = fileName;
+                img.alt = `Image ${i}`;
+                img.className = 'image';
+                container.appendChild(img);
+            }
+        }
+
+        window.onload = async function() {
+            createImages(document.getElementById('image-container-bottom'), 'File ', 205);
+
+            const topScroll = parseInt(await getSetting('topScroll') || '0');
+            const bottomScroll = parseInt(await getSetting('bottomScroll') || '0');
+            const sliderBottomValue = parseInt(await getSetting('sliderBottomValue') || '125');
+            const slidersHidden = await getSetting('slidersHidden') === true;
+
+            document.getElementById('top').scrollTop = topScroll;
+            document.getElementById('bottom').scrollTop = bottomScroll;
+            document.getElementById('slider-bottom').value = sliderBottomValue;
+
+            updateImageTransform(document.getElementById('image-container-bottom'), document.getElementById('slider-bottom'));
+            updateScrollIndicators();
+
+            if (slidersHidden) {
+                document.querySelectorAll('.slider-container').forEach(slider => {
+                    slider.classList.add('hidden');
+                });
+            }
         };
 
-        // 保存滚动位置
-        document.getElementById('top').onscroll = function() {
-            localStorage.setItem('topScroll', this.scrollTop);
+        document.getElementById('top').onscroll = () => saveSetting('topScroll', document.getElementById('top').scrollTop);
+        document.getElementById('bottom').onscroll = () => {
+            saveSetting('bottomScroll', document.getElementById('bottom').scrollTop);
+            updateScrollIndicators();
         };
 
-        document.getElementById('bottom').onscroll = function() {
-            localStorage.setItem('bottomScroll', this.scrollTop);
-        };
+        document.getElementById('slider-bottom').addEventListener('touchstart', () => lockScrollRatio());
+        document.getElementById('slider-bottom').addEventListener('input', function() {
+            saveSetting('sliderBottomValue', this.value);
+            updateImageTransform(document.getElementById('image-container-bottom'), this);
+        });
+        document.getElementById('slider-bottom').addEventListener('touchend', () => unlockScrollRatio());
+
+        let touchStartTime = null;
+        let touchCount = 0;
+        let touchTimer = null;
+
+        function handleTouchStart(event) {
+            touchCount = event.touches.length;
+            if (touchCount === 5 && !touchStartTime) {
+                touchStartTime = Date.now();
+                touchTimer = setTimeout(() => {
+                    toggleSliders();
+                }, 5000);
+            }
+        }
+
+        function handleTouchEnd() {
+            if (touchCount === 5 && touchStartTime) {
+                clearTimeout(touchTimer);
+                touchStartTime = null;
+            }
+        }
+
+        function toggleSliders() {
+            const sliders = document.querySelectorAll('.slider-container');
+            sliders.forEach(slider => slider.classList.toggle('hidden'));
+            const hidden = document.querySelector('.slider-container').classList.contains('hidden');
+            saveSetting('slidersHidden', hidden);
+        }
+
+        document.body.addEventListener('touchstart', handleTouchStart);
+        document.body.addEventListener('touchend', handleTouchEnd);
+        document.body.addEventListener('touchmove', handleTouchStart);
+
+        ['click', 'mousedown'].forEach(eventName => {
+            document.getElementById('slider-bottom').addEventListener(eventName, e => e.preventDefault());
+        });
     </script>
 </body>
 </html>
