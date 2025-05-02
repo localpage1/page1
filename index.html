@@ -263,11 +263,11 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
 
                  // --- Restore state AFTER images are loaded ---
                 // Restore scroll positions
-                topPane.scrollTop = parseFloat(localStorage.getItem('topScroll') || '0');
-                bottomPane.scrollTop = parseFloat(localStorage.getItem('bottomScroll') || '0');
+                topPane.scrollTop = parseFloat(localStorage.getItem('topScroll2') || '0');
+                bottomPane.scrollTop = parseFloat(localStorage.getItem('bottomScroll2') || '0');
 
                 // Restore slider value for the bottom pane
-                bottomSlider.value = localStorage.getItem('sliderBottomValue') || 125; // Default zoom 125%
+                bottomSlider.value = localStorage.getItem('sliderBottomValue2') || 125; // Default zoom 125%
 
                  // Apply initial image transform based on restored slider value
                 updateImageTransform(); // Call simplified version
@@ -276,8 +276,8 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
                 updateScrollIndicators();
 
                 // Restore slider visibility state
-                const slidersHidden = localStorage.getItem('slidersHidden') === 'true';
-                if (slidersHidden) {
+                const slidersHidden2 = localStorage.getItem('slidersHidden2') === 'true';
+                if (slidersHidden2) {
                     document.querySelectorAll('.slider-container').forEach(slider => {
                         slider.classList.add('hidden');
                     });
@@ -340,13 +340,13 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
             const bottom = document.getElementById('bottom');
 
             // Calculate Top Ratio (handle division by zero)
-            const topScrollable = top.scrollHeight - top.clientHeight;
-            const topRatio = topScrollable > 0 ? (top.scrollTop / topScrollable).toFixed(2) : "0.00";
+            const topScroll2able = top.scrollHeight - top.clientHeight;
+            const topRatio = topScroll2able > 0 ? (top.scrollTop / topScroll2able).toFixed(2) : "0.00";
 
             // Calculate Bottom Ratio (handle division by zero)
-            const bottomScrollable = bottom.scrollHeight - bottom.clientHeight;
+            const bottomScroll2able = bottom.scrollHeight - bottom.clientHeight;
              // Use Math.max to prevent negative ratio if scrollTop exceeds scrollable height temporarily
-            const bottomRatio = bottomScrollable > 0 ? (Math.max(0, bottom.scrollTop) / bottomScrollable).toFixed(2) : "0.00";
+            const bottomRatio = bottomScroll2able > 0 ? (Math.max(0, bottom.scrollTop) / bottomScroll2able).toFixed(2) : "0.00";
 
             // Update indicators
             document.getElementById('scroll-top-indicator').textContent = `Top 滚动: ${topRatio}`;
@@ -375,7 +375,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
         document.getElementById('top').onscroll = function() {
             // Use requestAnimationFrame to avoid performance issues on rapid scrolling
             requestAnimationFrame(() => {
-                localStorage.setItem('topScroll', this.scrollTop);
+                localStorage.setItem('topScroll2', this.scrollTop);
                 updateScrollIndicators();
             });
         };
@@ -383,7 +383,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
             // Only save if scroll is not locked (i.e., not during slider drag)
             if (lockedScrollRatioBottom === null) {
                  requestAnimationFrame(() => {
-                    localStorage.setItem('bottomScroll', this.scrollTop);
+                    localStorage.setItem('bottomScroll2', this.scrollTop);
                     updateScrollIndicators();
                  });
             } else {
@@ -400,7 +400,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
         }, { passive: false }); // Need passive: false to preventDefault
 
         document.getElementById('slider-bottom').addEventListener('input', function() {
-            localStorage.setItem('sliderBottomValue', this.value);
+            localStorage.setItem('sliderBottomValue2', this.value);
             updateImageTransform(); // Update images based on slider value
         });
 
@@ -479,7 +479,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
             });
 
             // Store the hidden state
-            localStorage.setItem('slidersHidden', isHidden);
+            localStorage.setItem('slidersHidden2', isHidden);
             // console.log(`Sliders toggled. Hidden: ${isHidden}`);
         }
 
