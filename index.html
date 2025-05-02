@@ -397,7 +397,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
              // Prevent page scroll while dragging slider
              event.preventDefault();
             lockScrollRatio(); // Lock bottom scroll ratio
-        }, { passive: false }); // Need passive: false to preventDefault
+        }, { passive: true }); // Need passive: false to preventDefault
 
         document.getElementById('slider-bottom').addEventListener('input', function() {
             localStorage.setItem('sliderBottomValue2', this.value);
