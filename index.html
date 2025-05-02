@@ -489,7 +489,7 @@ Fusce convallis, mauris imperdiet gravida bibendum, nisl turpis suscipit mauris,
         document.body.addEventListener('touchmove', handleTouchMove, { passive: true });   // Move can be passive
 
         // Prevent default click on slider track (forces drag for value change)
-        document.getElementById('slider-bottom').addEventListener('click', e => e.preventDefault());
+        document.getElementById('slider-bottom').addEventListener('mousedown', e => e.preventDefault());
 
         // Handle mousedown for mouse dragging
         document.getElementById('slider-bottom').addEventListener('mousedown', e => {
